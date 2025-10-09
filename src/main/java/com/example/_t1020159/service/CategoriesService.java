@@ -43,6 +43,12 @@ public class CategoriesService {
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
-
-
+    //4 cập nhật category
+    public CategoriesResponseDTO updateCategory(Long id, CategoriesRequestDTO requestDTO) {
+        CategoriesEntity existingCategory = categoriesRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+        existingCategory.setName(requestDTO.getName());
+        CategoriesEntity updatedCategory = categoriesRepository.save(existingCategory);
+        return mapToResponseDTO(updatedCategory);
+    }
 }

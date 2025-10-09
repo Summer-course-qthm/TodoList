@@ -1,6 +1,7 @@
 package com.example._t1020159.service;
 
 import com.example._t1020159.dto.request.ItemRequestDTO;
+import com.example._t1020159.dto.request.UpdateCategoryRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
 import com.example._t1020159.entity.CategoriesEntity;
 import com.example._t1020159.entity.ItemEntity;
@@ -87,8 +88,33 @@ public class ItemService {
                 .orElseThrow(() -> new EntityNotFoundException("Item not found"));
         return mapToResponseDTO(item);
     }
+    //5 cập nhật item
+    public ItemResponseDTO updateItem(Long itemId, ItemRequestDTO requestDTO) {
+        ItemEntity item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item not found"));
 
+        CategoriesEntity category = categoriesRepository.findById(requestDTO.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
+        item.setTitle(requestDTO.getTitle());
+        item.setDescription(requestDTO.getDescription());
+        item.setStart(requestDTO.getStart());
+        item.setDue(requestDTO.getDue());
+        item.setStatus(requestDTO.isStatus());
+        item.setCategory(category);
 
+        ItemEntity updatedItem = itemRepository.save(item);
+        return mapToResponseDTO(updatedItem);
+    }
 
+    //6 sửa id category trong item
+    public ItemResponseDTO updateItemCategory(Long itemId, Long categoryId) {
+        ItemEntity item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item not found")); // Tìm Item theo itemId
+        CategoriesEntity category = categoriesRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found")); // Tìm Category theo categoryId
+        item.setCategory(category); // Cập nhật Category cho Item
+        ItemEntity updatedItem = itemRepository.save(item); // Lưu Item đã cập nhật
+        return mapToResponseDTO(updatedItem); // Trả về Item đã cập nhật dưới dạng DTO
+    }
 }

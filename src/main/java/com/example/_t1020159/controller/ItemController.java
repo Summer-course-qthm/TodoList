@@ -1,6 +1,7 @@
 package com.example._t1020159.controller;
 
 import com.example._t1020159.dto.request.ItemRequestDTO;
+import com.example._t1020159.dto.request.UpdateCategoryRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
 import com.example._t1020159.service.ItemService; // <<< Import class ItemService
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,17 @@ public class ItemController {
         itemService.deleteItem(id);
         return ResponseEntity.ok("xóa thành công");
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<ItemResponseDTO> updateItem(@PathVariable Long id, @RequestBody ItemRequestDTO requestDTO) {
+        ItemResponseDTO updatedItem = itemService.updateItem(id, requestDTO);
+        return ResponseEntity.ok(updatedItem);
+    }
 
+    // cập nhật id category của item
+    @PatchMapping("/{id}/category")
+    public ResponseEntity<ItemResponseDTO> updateItemCategory(@PathVariable Long id, @RequestBody UpdateCategoryRequestDTO requestDTO) {
+        ItemResponseDTO updatedItem = itemService.updateItemCategory(id, requestDTO.getCategoryId());
+        return ResponseEntity.ok(updatedItem);
+    }
 
 }

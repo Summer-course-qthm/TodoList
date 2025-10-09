@@ -30,10 +30,18 @@ public class CategoryController {
         return new ResponseEntity<>(categories, HttpStatus.OK);
     }
 
+    // xóa category
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoriesService.deleteCategory(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    //cập nhật category
+    @PostMapping("/{id}")
+    public ResponseEntity<CategoriesResponseDTO> updateCategory(@PathVariable Long id, @RequestBody CategoriesRequestDTO requestDTO) {
+        CategoriesResponseDTO updatedCategory = categoriesService.updateCategory(id, requestDTO);
+        return new ResponseEntity<>(updatedCategory, HttpStatus.OK);
     }
 
 
