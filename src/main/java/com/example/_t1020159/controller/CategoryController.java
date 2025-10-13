@@ -20,28 +20,28 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<CategoriesResponseDTO> createCategory(@RequestBody CategoriesRequestDTO requestDTO) {
         CategoriesResponseDTO newCategory = categoriesService.createCategory(requestDTO);
-        return new ResponseEntity<>(newCategory, HttpStatus.CREATED);
+        return ResponseEntity.ok(newCategory);
     }
 
     // lấy tất cả category
     @GetMapping
     public ResponseEntity<List<CategoriesResponseDTO>> getAllCategories() {
         List<CategoriesResponseDTO> categories = categoriesService.getAllCategories();
-        return new ResponseEntity<>(categories, HttpStatus.OK);
+        return ResponseEntity.ok(categories);
     }
 
     // xóa category
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoriesService.deleteCategory(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok().build();
     }
 
     //cập nhật category
     @PostMapping("/{id}")
     public ResponseEntity<CategoriesResponseDTO> updateCategory(@PathVariable Long id, @RequestBody CategoriesRequestDTO requestDTO) {
         CategoriesResponseDTO updatedCategory = categoriesService.updateCategory(id, requestDTO);
-        return new ResponseEntity<>(updatedCategory, HttpStatus.OK);
+        return ResponseEntity.ok(updatedCategory);
     }
 
 

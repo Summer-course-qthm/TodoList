@@ -5,6 +5,7 @@ import com.example._t1020159.dto.request.UpdateCategoryRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
 import com.example._t1020159.service.ItemService; // <<< Import class ItemService
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +14,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/items")
-@RequiredArgsConstructor
 public class ItemController {
 
-    private final ItemService itemService; // Inject class ItemService trực tiếp
+    @Autowired
+    private ItemService itemService; // Inject class ItemService trực tiếp
 
     // POST /api/items : Tạo Item mới
     @PostMapping
@@ -44,6 +45,8 @@ public class ItemController {
         itemService.deleteItem(id);
         return ResponseEntity.ok("xóa thành công");
     }
+
+    // cập nhật item
     @PutMapping("/{id}")
     public ResponseEntity<ItemResponseDTO> updateItem(@PathVariable Long id, @RequestBody ItemRequestDTO requestDTO) {
         ItemResponseDTO updatedItem = itemService.updateItem(id, requestDTO);

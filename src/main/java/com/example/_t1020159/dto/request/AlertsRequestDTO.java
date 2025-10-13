@@ -1,7 +1,10 @@
 package com.example._t1020159.dto.request;
 
-
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 @Getter
 @Setter
@@ -10,12 +13,12 @@ import lombok.*;
 @Builder
 public class AlertsRequestDTO {
 
+    // Nội dung tin nhắn
     private String message;
 
+    // Số phút thông báo (âm nếu sau Start, dương nếu trước Due hoặc Start, tùy theo logic nền)
     private Integer alertBefore;
 
-    private boolean isSent;
-
+    // ID của Item mà Alert này liên kết đến (BẮT BUỘC)
     private Long itemId;
-
 }
