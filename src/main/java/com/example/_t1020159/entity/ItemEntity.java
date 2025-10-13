@@ -28,6 +28,9 @@ public class ItemEntity {
 
     private boolean status;// trạng thái
 
+    private Long prioritize; // độ ưu tiên
+
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private CategoriesEntity category;

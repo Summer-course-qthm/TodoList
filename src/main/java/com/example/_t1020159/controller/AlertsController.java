@@ -46,8 +46,8 @@ public class AlertsController {
 
     // 3. Xóa Alert
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
+    public ResponseEntity<String> deleteAlert(@PathVariable Long id) {
         alertsService.deleteAlert(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("xoa thanh cong");
     }
 }

@@ -10,7 +10,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ItemResponseDTO {
+
     private Long id;
+
+    private Long prioritize;
 
     private String title;
 

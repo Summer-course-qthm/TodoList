@@ -11,6 +11,8 @@ import lombok.*;
 @Builder
 public class ItemRequestDTO {
 
+    private Long prioritize;
+
     private String title;
 
     private String description;

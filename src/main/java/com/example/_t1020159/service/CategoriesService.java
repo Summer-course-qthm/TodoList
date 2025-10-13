@@ -48,7 +48,7 @@ public class CategoriesService {
         CategoriesEntity existingCategory = categoriesRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
         existingCategory.setName(requestDTO.getName());
-        CategoriesEntity updatedCategory = categoriesRepository.save(existingCategory);
-        return mapToResponseDTO(updatedCategory);
+        categoriesRepository.save(existingCategory);
+        return mapToResponseDTO(existingCategory);
     }
 }

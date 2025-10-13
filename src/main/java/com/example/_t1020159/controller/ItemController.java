@@ -27,8 +27,8 @@ public class ItemController {
     }
     // lấy tất cả item
     @GetMapping
-    public ResponseEntity<List<ItemResponseDTO>> getAllItems() {
-        List<ItemResponseDTO> items = itemService.getAllItems();
+    public ResponseEntity<List<ItemResponseDTO>> getAllItems(@RequestParam(required = false, name = "prioritize", defaultValue = "ASC") String sortPrioritize) {
+        List<ItemResponseDTO> items = itemService.getAllItems(sortPrioritize);
         return ResponseEntity.ok(items);
     }
 
@@ -59,5 +59,6 @@ public class ItemController {
         ItemResponseDTO updatedItem = itemService.updateItemCategory(id, requestDTO.getCategoryId());
         return ResponseEntity.ok(updatedItem);
     }
+
 
 }

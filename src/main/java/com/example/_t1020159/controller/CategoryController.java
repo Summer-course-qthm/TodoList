@@ -38,7 +38,7 @@ public class CategoryController {
     }
 
     //cập nhật category
-    @PostMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<CategoriesResponseDTO> updateCategory(@PathVariable Long id, @RequestBody CategoriesRequestDTO requestDTO) {
         CategoriesResponseDTO updatedCategory = categoriesService.updateCategory(id, requestDTO);
         return ResponseEntity.ok(updatedCategory);

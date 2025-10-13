@@ -10,6 +10,7 @@ import com.example._t1020159.repository.ItemRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service; // <<< Chú thích @Service được đặt tại đây
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class ItemService {
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
         ItemEntity newItem = ItemEntity.builder()
+                .prioritize(requestDTO.getPrioritize())
                 .title(requestDTO.getTitle())
                 .description(requestDTO.getDescription())
                 .start(requestDTO.getStart())
@@ -44,6 +46,7 @@ public class ItemService {
 
         return ItemResponseDTO.builder()
                 .id(savedItem.getId())
+                .prioritize(savedItem.getPrioritize())
                 .title(savedItem.getTitle())
                 .description(savedItem.getDescription())
                 .start(savedItem.getStart())
@@ -68,6 +71,7 @@ public class ItemService {
 
         return ItemResponseDTO.builder()
                 .id(entity.getId())
+                .prioritize(entity.getPrioritize())
                 .title(entity.getTitle())
                 .description(entity.getDescription())
                 .start(entity.getStart())
@@ -76,8 +80,19 @@ public class ItemService {
                 .categoryId(categoryId)
                 .build();
     }
-    public List<ItemResponseDTO> getAllItems() {
-        List<ItemEntity> items = itemRepository.findAll();
+    public List<ItemResponseDTO> getAllItems(String sortUuTien) {
+        Sort.Direction uutien;
+        String sortInput = (sortUuTien != null && !sortUuTien.isEmpty())
+                ? sortUuTien.toUpperCase() // ĐẢM BẢO CHUYỂN SANG HOA
+                : "ASC";
+        try {
+            uutien = Sort.Direction.fromString(sortUuTien);
+        } catch (IllegalArgumentException e) {
+            uutien = Sort.Direction.DESC;
+        }
+
+        Sort sortPrioritize = Sort.by(uutien, "prioritize");
+        List<ItemEntity> items = itemRepository.findAll(sortPrioritize);
         return items.stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -92,16 +107,12 @@ public class ItemService {
     public ItemResponseDTO updateItem(Long itemId, ItemRequestDTO requestDTO) {
         ItemEntity item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Item not found"));
-
-        CategoriesEntity category = categoriesRepository.findById(requestDTO.getCategoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-
+        item.setPrioritize(requestDTO.getPrioritize());
         item.setTitle(requestDTO.getTitle());
         item.setDescription(requestDTO.getDescription());
         item.setStart(requestDTO.getStart());
         item.setDue(requestDTO.getDue());
         item.setStatus(requestDTO.isStatus());
-        item.setCategory(category);
 
         ItemEntity updatedItem = itemRepository.save(item);
         return mapToResponseDTO(updatedItem);
