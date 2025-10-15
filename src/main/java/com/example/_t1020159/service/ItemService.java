@@ -1,14 +1,12 @@
 package com.example._t1020159.service;
 
 import com.example._t1020159.dto.request.ItemRequestDTO;
-import com.example._t1020159.dto.request.UpdateCategoryRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
 import com.example._t1020159.entity.CategoriesEntity;
 import com.example._t1020159.entity.ItemEntity;
 import com.example._t1020159.repository.CategoriesRepository;
 import com.example._t1020159.repository.ItemRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service; // <<< Chú thích @Service được đặt tại đây
@@ -80,19 +78,32 @@ public class ItemService {
                 .categoryId(categoryId)
                 .build();
     }
-    public List<ItemResponseDTO> getAllItems(String sortUuTien) {
-        Sort.Direction uutien;
-        String sortInput = (sortUuTien != null && !sortUuTien.isEmpty())
-                ? sortUuTien.toUpperCase() // ĐẢM BẢO CHUYỂN SANG HOA
-                : "ASC";
-        try {
-            uutien = Sort.Direction.fromString(sortUuTien);
-        } catch (IllegalArgumentException e) {
-            uutien = Sort.Direction.DESC;
-        }
+    public List<ItemResponseDTO> getAllItems(String sortPrioritize, String sortBy) {
+        Sort.Direction direction;
+        String sortField;
 
-        Sort sortPrioritize = Sort.by(uutien, "prioritize");
-        List<ItemEntity> items = itemRepository.findAll(sortPrioritize);
+        String sortInput = (sortPrioritize != null && !sortPrioritize.isEmpty())
+                ? sortPrioritize.toUpperCase() // ĐẢM BẢO CHUYỂN SANG HOA
+                : "ASC";
+
+
+        try {
+            direction = Sort.Direction.fromString(sortInput);
+        }//bắt lỗi khi truyền sai kiểu dữ liệu đối số
+        catch (IllegalArgumentException e) {
+            direction = Sort.Direction.DESC;
+        }
+        //đối số là lúc mình sử dùng
+        //tham số là lu mình tạo
+
+        // XÁC ĐỊNH THUỘC TÍNH SẮP XẾP
+        sortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "due";
+
+        // tạo đối tượng sắp xếp
+        Sort sortCriteria  = Sort.by(direction, sortField);
+
+        List<ItemEntity> items = itemRepository.findAll(sortCriteria);
+
         return items.stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());

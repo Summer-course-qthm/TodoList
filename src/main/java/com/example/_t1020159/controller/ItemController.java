@@ -27,8 +27,10 @@ public class ItemController {
     }
     // lấy tất cả item
     @GetMapping
-    public ResponseEntity<List<ItemResponseDTO>> getAllItems(@RequestParam(required = false, name = "prioritize", defaultValue = "ASC") String sortPrioritize) {
-        List<ItemResponseDTO> items = itemService.getAllItems(sortPrioritize);
+    public ResponseEntity<List<ItemResponseDTO>> getAllItems(
+            @RequestParam(required = false, name = "prioritize", defaultValue = "ASC") String sortPrioritize,
+            @RequestParam(required = false,name = "sortBy",defaultValue = "start") String sortBy) {
+        List<ItemResponseDTO> items = itemService.getAllItems(sortPrioritize, sortBy);
         return ResponseEntity.ok(items);
     }
 
