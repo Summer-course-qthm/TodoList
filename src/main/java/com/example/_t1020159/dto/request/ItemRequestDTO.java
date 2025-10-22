@@ -25,4 +25,9 @@ public class ItemRequestDTO {
 
     private Long categoryId;
 
+    private boolean isRecurring;
+
+    private String recurrenceInterval; // DAILY, WEEK,
+
+
 }

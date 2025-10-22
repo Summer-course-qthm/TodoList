@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,6 +41,29 @@ public class ItemController {
         ItemResponseDTO item = itemService.getItemById(id);
         return ResponseEntity.ok(item);
     }
+
+    //lấy theo ngày
+    @GetMapping("/date")
+    public ResponseEntity<List<ItemResponseDTO>> getItemsByDate(@RequestParam("date") String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr); // ví dụ: 2025-10-16
+        List<ItemResponseDTO> items = itemService.getItemsByDate(date);
+        return ResponseEntity.ok(items);
+    }
+
+    // Lấy theo khoảng ngày
+    @GetMapping("/date-range")
+    public ResponseEntity<List<ItemResponseDTO>> getItemsByDateRange(
+            @RequestParam("from") String fromStr,
+            @RequestParam("to") String toStr) {
+
+        LocalDate fromDate = LocalDate.parse(fromStr);
+        LocalDate toDate = LocalDate.parse(toStr);
+
+        List<ItemResponseDTO> items = itemService.getItemsByDateRange(fromDate, toDate);
+        return ResponseEntity.ok(items);
+    }
+
+
 
     // xóa item
     @DeleteMapping("/{id}")

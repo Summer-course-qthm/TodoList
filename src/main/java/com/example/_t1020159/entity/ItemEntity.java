@@ -30,6 +30,10 @@ public class ItemEntity {
 
     private Long prioritize; // độ ưu tiên
 
+    private boolean isRecurring;
+
+    private String recurrenceInterval;
+
 
     @ManyToOne
     @JoinColumn(name = "category_id")

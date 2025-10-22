@@ -7,11 +7,13 @@ import com.example._t1020159.entity.ItemEntity;
 import com.example._t1020159.repository.CategoriesRepository;
 import com.example._t1020159.repository.ItemRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service; // <<< Chú thích @Service được đặt tại đây
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +25,9 @@ public class ItemService {
 
     @Autowired
     private CategoriesRepository categoriesRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     //tạo item mới
     //@Transactional //giúp rollback nếu 1 bước trong transactional bị lỗi
@@ -139,4 +144,24 @@ public class ItemService {
         ItemEntity updatedItem = itemRepository.save(item); // Lưu Item đã cập nhật
         return mapToResponseDTO(updatedItem); // Trả về Item đã cập nhật dưới dạng DTO
     }
+
+    //7 get theo thời gian
+    public List<ItemResponseDTO> getItemsByDate(LocalDate date) {
+        return itemRepository.findAll().stream()
+                .filter(item -> item.getStart() != null &&
+                        item.getStart().toLocalDate().equals(date))
+                .map(item -> modelMapper.map(item, ItemResponseDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    //8 get theo khoảng thời gian
+    public List<ItemResponseDTO> getItemsByDateRange(LocalDate from, LocalDate to) {
+        return itemRepository.findAll().stream()
+                .filter(item -> item.getStart() != null &&
+                        !item.getStart().toLocalDate().isBefore(from) &&
+                        !item.getStart().toLocalDate().isAfter(to))
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
 }

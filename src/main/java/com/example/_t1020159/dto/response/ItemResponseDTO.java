@@ -26,4 +26,8 @@ public class ItemResponseDTO {
     private boolean status;
 
     private Long categoryId;
+
+    private boolean isRecurring;
+
+    private String recurrenceInterval;
 }
