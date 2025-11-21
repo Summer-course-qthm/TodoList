@@ -1,6 +1,7 @@
 package com.example._t1020159.controller;
 
 import com.example._t1020159.dto.request.ItemRequestDTO;
+import com.example._t1020159.dto.request.ItemWithAlertRequestDTO;
 import com.example._t1020159.dto.request.UpdateCategoryRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
 import com.example._t1020159.service.ItemService; // <<< Import class ItemService
@@ -22,8 +23,8 @@ public class ItemController {
 
     // POST /api/items : Tạo Item mới
     @PostMapping
-    public ResponseEntity<ItemResponseDTO> createItem(@RequestBody ItemRequestDTO requestDTO) {
-        ItemResponseDTO newItem = itemService.createItem(requestDTO);
+    public ResponseEntity<String> createItem(@RequestBody ItemWithAlertRequestDTO requestDTO) {
+        String newItem = itemService.createItem(requestDTO);
         return ResponseEntity.ok(newItem);
     }
     // lấy tất cả item
@@ -66,11 +67,11 @@ public class ItemController {
 
 
     // xóa item
-    @DeleteMapping("/{id}")
+    /*@DeleteMapping("/{id}")
     public ResponseEntity<String> deleteItem(@PathVariable Long id) {
         itemService.deleteItem(id);
         return ResponseEntity.ok("xóa thành công");
-    }
+    }*/
 
     // cập nhật item
     @PutMapping("/{id}")

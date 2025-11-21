@@ -1,6 +1,7 @@
 package com.example._t1020159.service;
 
 import com.example._t1020159.dto.request.ItemRequestDTO;
+import com.example._t1020159.dto.request.ItemWithAlertRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
 import com.example._t1020159.entity.CategoriesEntity;
 import com.example._t1020159.entity.ItemEntity;
@@ -31,32 +32,42 @@ public class ItemService {
 
     //tạo item mới
     //@Transactional //giúp rollback nếu 1 bước trong transactional bị lỗi
-    public ItemResponseDTO createItem(ItemRequestDTO requestDTO) {
-        CategoriesEntity category = categoriesRepository.findById(requestDTO.getCategoryId())
+    public String createItem(ItemWithAlertRequestDTO itemWithAlertRequestDTO) {
+        CategoriesEntity category = categoriesRepository.findById(itemWithAlertRequestDTO.getCategoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
-        ItemEntity newItem = ItemEntity.builder()
-                .prioritize(requestDTO.getPrioritize())
-                .title(requestDTO.getTitle())
-                .description(requestDTO.getDescription())
-                .start(requestDTO.getStart())
-                .due(requestDTO.getDue())
-                .status(requestDTO.isStatus())
-                .category(category)
-                .build();
+        if(itemWithAlertRequestDTO.isRecurring()) {
+            ItemEntity newItem = ItemEntity.builder()
+                    .prioritize(itemWithAlertRequestDTO.getPrioritize())
+                    .title(itemWithAlertRequestDTO.getTitle())
+                    .description(itemWithAlertRequestDTO.getDescription())
+                    .start(itemWithAlertRequestDTO.getStart())
+                    .due(itemWithAlertRequestDTO.getDue())
+                    .status(itemWithAlertRequestDTO.isStatus())
+                    .category(category)
+                    .alertBefore(itemWithAlertRequestDTO.getAlertBefore())
+                    .message(itemWithAlertRequestDTO.getMessage())
+                    .recurrenceInterval(itemWithAlertRequestDTO.getRecurrenceInterval())
+                    .build();
+            ItemEntity savedItem = itemRepository.save(newItem);
+        }
+        else {
+            ItemEntity newItem = ItemEntity.builder()
+                    .prioritize(itemWithAlertRequestDTO.getPrioritize())
+                    .title(itemWithAlertRequestDTO.getTitle())
+                    .description(itemWithAlertRequestDTO.getDescription())
+                    .start(itemWithAlertRequestDTO.getStart())
+                    .due(itemWithAlertRequestDTO.getDue())
+                    .status(itemWithAlertRequestDTO.isStatus())
+                    .category(category)
+                    .alertBefore(itemWithAlertRequestDTO.getAlertBefore())
+                    .message(itemWithAlertRequestDTO.getMessage())
+                    .build();
+            ItemEntity savedItem = itemRepository.save(newItem);
+        }
 
-        ItemEntity savedItem = itemRepository.save(newItem);
+        return "tao item thanh cong";
 
-        return ItemResponseDTO.builder()
-                .id(savedItem.getId())
-                .prioritize(savedItem.getPrioritize())
-                .title(savedItem.getTitle())
-                .description(savedItem.getDescription())
-                .start(savedItem.getStart())
-                .due(savedItem.getDue())
-                .status(savedItem.isStatus())
-                .categoryId(savedItem.getCategory().getId())
-                .build();
     }
     /** 2. Xóa Item */
     @Transactional

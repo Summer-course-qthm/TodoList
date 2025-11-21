@@ -24,6 +24,7 @@ public class ItemEntity {
 
     private LocalDateTime start;
 
+    //thêm unique cho due và start
     private LocalDateTime due; //ngày hết hạn
 
     private boolean status;// trạng thái
@@ -32,6 +33,7 @@ public class ItemEntity {
 
     private boolean isRecurring;
 
+    @Column(nullable = true)
     private String recurrenceInterval;
 
 
@@ -43,9 +45,12 @@ public class ItemEntity {
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AttachmentsEntity> attachments;
 
-    @Column(name = "alerts", nullable = false)
-    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AlertsEntity> alerts;
+    private String message; //nội dung tin nhắn
+
+    private Integer alertBefore; // thông báo trước ...phút
+
+    private boolean isSent;//đánh dấu đã gửi hay chưa
+
 
 
 

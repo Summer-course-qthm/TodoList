@@ -12,4 +12,5 @@ public interface ItemRepository extends JpaRepository<ItemEntity, Long> {
 
     // Để tìm kiếm theo chu kỳ cụ thể (cho createRecurringTasks)
     List<ItemEntity> findByIsRecurringAndRecurrenceInterval(boolean isRecurring, String recurrenceInterval);
+
 }

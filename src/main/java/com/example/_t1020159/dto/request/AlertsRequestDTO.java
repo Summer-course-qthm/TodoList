@@ -13,11 +13,11 @@ import lombok.Builder;
 @Builder
 public class AlertsRequestDTO {
 
-    // Nội dung tin nhắn
-    private String message;
-
     // Số phút thông báo (âm nếu sau Start, dương nếu trước Due hoặc Start, tùy theo logic nền)
     private Integer alertBefore;
+
+    // Nội dung tin nhắn
+    private String message;
 
     // ID của Item mà Alert này liên kết đến (BẮT BUỘC)
     private Long itemId;
