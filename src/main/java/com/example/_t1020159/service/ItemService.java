@@ -3,6 +3,7 @@ package com.example._t1020159.service;
 import com.example._t1020159.dto.request.ItemRequestDTO;
 import com.example._t1020159.dto.request.ItemWithAlertRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
+import com.example._t1020159.dto.response.ItemWithAlertResponseDTO;
 import com.example._t1020159.entity.CategoriesEntity;
 import com.example._t1020159.entity.ItemEntity;
 import com.example._t1020159.repository.CategoriesRepository;
@@ -76,14 +77,14 @@ public class ItemService {
     }
 
     //3 lấy tất cả item
-    private ItemResponseDTO mapToResponseDTO(ItemEntity entity) {
+    private ItemWithAlertResponseDTO mapToResponseDTO(ItemEntity entity) {
         // Cần kiểm tra null cho Category để tránh lỗi khi Item không có Category
         Long categoryId = null;
         if (entity.getCategory() != null) {
             categoryId = entity.getCategory().getId();
         }
 
-        return ItemResponseDTO.builder()
+        return ItemWithAlertResponseDTO.builder()
                 .id(entity.getId())
                 .prioritize(entity.getPrioritize())
                 .title(entity.getTitle())
@@ -92,9 +93,12 @@ public class ItemService {
                 .due(entity.getDue())
                 .status(entity.isStatus())
                 .categoryId(categoryId)
+                .name(entity.getCategory() != null ? entity.getCategory().getName() : null)
+                .alertBefore(entity.getAlertBefore())
+                .message(entity.getMessage())
                 .build();
     }
-    public List<ItemResponseDTO> getAllItems(String sortPrioritize, String sortBy) {
+    public List<ItemWithAlertResponseDTO> getAllItems(String sortPrioritize, String sortBy) {
         Sort.Direction direction;
         String sortField;
 
@@ -125,13 +129,13 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
     //4 lấy theo id item
-    public ItemResponseDTO getItemById(Long id) {
+    public ItemWithAlertResponseDTO getItemById(Long id) {
         ItemEntity item = itemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Item not found"));
         return mapToResponseDTO(item);
     }
     //5 cập nhật item
-    public ItemResponseDTO updateItem(Long itemId, ItemRequestDTO requestDTO) {
+    public ItemWithAlertResponseDTO updateItem(Long itemId, ItemWithAlertRequestDTO requestDTO) {
         ItemEntity item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Item not found"));
         item.setPrioritize(requestDTO.getPrioritize());
@@ -146,7 +150,7 @@ public class ItemService {
     }
 
     //6 sửa id category trong item
-    public ItemResponseDTO updateItemCategory(Long itemId, Long categoryId) {
+    public ItemWithAlertResponseDTO updateItemCategory(Long itemId, Long categoryId) {
         ItemEntity item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Item not found")); // Tìm Item theo itemId
         CategoriesEntity category = categoriesRepository.findById(categoryId)
@@ -157,16 +161,16 @@ public class ItemService {
     }
 
     //7 get theo thời gian
-    public List<ItemResponseDTO> getItemsByDate(LocalDate date) {
+    public List<ItemWithAlertResponseDTO> getItemsByDate(LocalDate date) {
         return itemRepository.findAll().stream()
                 .filter(item -> item.getStart() != null &&
                         item.getStart().toLocalDate().equals(date))
-                .map(item -> modelMapper.map(item, ItemResponseDTO.class))
+                .map(item -> modelMapper.map(item, ItemWithAlertResponseDTO.class))
                 .collect(Collectors.toList());
     }
 
     //8 get theo khoảng thời gian
-    public List<ItemResponseDTO> getItemsByDateRange(LocalDate from, LocalDate to) {
+    public List<ItemWithAlertResponseDTO> getItemsByDateRange(LocalDate from, LocalDate to) {
         return itemRepository.findAll().stream()
                 .filter(item -> item.getStart() != null &&
                         !item.getStart().toLocalDate().isBefore(from) &&
@@ -174,5 +178,6 @@ public class ItemService {
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
+
 
 }

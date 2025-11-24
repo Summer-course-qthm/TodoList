@@ -3,6 +3,7 @@ package com.example._t1020159.viewcontroller;
 import com.example._t1020159.dto.request.ItemWithAlertRequestDTO;
 import com.example._t1020159.dto.response.CategoriesResponseDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
+import com.example._t1020159.dto.response.ItemWithAlertResponseDTO;
 import com.example._t1020159.service.CategoriesService;
 import com.example._t1020159.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,27 @@ public class ItemViewController {
 
         return "item-form";
     }
+    @GetMapping("/edit/{id}")
+    public String showEditItemForm(@PathVariable Long id, Model model) {
+        // Lấy Item theo ID
+        ItemWithAlertResponseDTO itemDto = itemService.getItemById(id);
+        model.addAttribute("item", itemDto);
+        System.out.println(itemDto.getStart());
+        System.out.println(itemDto.getDue());
+        // Lấy danh sách Category DTO và truyền vào Model
+        List<CategoriesResponseDTO> categories = categoriesService.getAllCategories();
+        model.addAttribute("categories", categories);
+        return "item-form2";
+    }
+    @PostMapping("/edit/{id}")
+    public String updateItem(@PathVariable Long id, @ModelAttribute("item") ItemWithAlertRequestDTO formDto) {
+        // Logíc cập nhật Item (chứa logic lưu vào DB)
+        itemService.updateItem(id, formDto);
+        System.out.println(formDto.getStart());
+        System.out.println(formDto.getDue());
+        // Điều hướng sau khi cập nhật thành công.
+        return "redirect:/items/showview";
+    }
 
     // 2. Phương thức xử lý tạo Item
     @PostMapping("/create")
@@ -57,7 +79,7 @@ public class ItemViewController {
     @GetMapping("/showview")
     public String showAllItems(Model model) {
         // Lấy tất cả item từ DB
-        List<ItemResponseDTO> items = itemService.getAllItems(null, null);
+        List<ItemWithAlertResponseDTO> items = itemService.getAllItems(null, null);
 
         // Thêm vào model để Thymeleaf hiển thị
         model.addAttribute("items", items);

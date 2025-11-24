@@ -92,7 +92,7 @@
                               th:text="${item.status} ? 'Hoàn thành' : 'Đang làm'"></span>
                     </td>
                     <td>
-                        <a th:href="@{'/items/' + ${item.id}}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                        <a th:href="@{'/items/edit/' + ${item.id}}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
                             <i class="fa fa-eye"></i>
                         </a>
 

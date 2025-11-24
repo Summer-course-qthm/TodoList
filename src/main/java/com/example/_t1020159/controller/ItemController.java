@@ -4,6 +4,7 @@ import com.example._t1020159.dto.request.ItemRequestDTO;
 import com.example._t1020159.dto.request.ItemWithAlertRequestDTO;
 import com.example._t1020159.dto.request.UpdateCategoryRequestDTO;
 import com.example._t1020159.dto.response.ItemResponseDTO;
+import com.example._t1020159.dto.response.ItemWithAlertResponseDTO;
 import com.example._t1020159.service.ItemService; // <<< Import class ItemService
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,38 +30,38 @@ public class ItemController {
     }
     // lấy tất cả item
     @GetMapping
-    public ResponseEntity<List<ItemResponseDTO>> getAllItems(
+    public ResponseEntity<List<ItemWithAlertResponseDTO>> getAllItems(
             @RequestParam(required = false, name = "prioritize", defaultValue = "ASC") String sortPrioritize,
             @RequestParam(required = false,name = "sortBy",defaultValue = "start") String sortBy) {
-        List<ItemResponseDTO> items = itemService.getAllItems(sortPrioritize, sortBy);
+        List<ItemWithAlertResponseDTO> items = itemService.getAllItems(sortPrioritize, sortBy);
         return ResponseEntity.ok(items);
     }
 
     // lấy theo id item
     @GetMapping("/{id}")
-    public ResponseEntity<ItemResponseDTO> getItemById(@PathVariable Long id) {
-        ItemResponseDTO item = itemService.getItemById(id);
+    public ResponseEntity<ItemWithAlertResponseDTO> getItemById(@PathVariable Long id) {
+        ItemWithAlertResponseDTO item = itemService.getItemById(id);
         return ResponseEntity.ok(item);
     }
 
     //lấy theo ngày
     @GetMapping("/date")
-    public ResponseEntity<List<ItemResponseDTO>> getItemsByDate(@RequestParam("date") String dateStr) {
+    public ResponseEntity<List<ItemWithAlertResponseDTO>> getItemsByDate(@RequestParam("date") String dateStr) {
         LocalDate date = LocalDate.parse(dateStr); // ví dụ: 2025-10-16
-        List<ItemResponseDTO> items = itemService.getItemsByDate(date);
+        List<ItemWithAlertResponseDTO> items = itemService.getItemsByDate(date);
         return ResponseEntity.ok(items);
     }
 
     // Lấy theo khoảng ngày
     @GetMapping("/date-range")
-    public ResponseEntity<List<ItemResponseDTO>> getItemsByDateRange(
+    public ResponseEntity<List<ItemWithAlertResponseDTO>> getItemsByDateRange(
             @RequestParam("from") String fromStr,
             @RequestParam("to") String toStr) {
 
         LocalDate fromDate = LocalDate.parse(fromStr);
         LocalDate toDate = LocalDate.parse(toStr);
 
-        List<ItemResponseDTO> items = itemService.getItemsByDateRange(fromDate, toDate);
+        List<ItemWithAlertResponseDTO> items = itemService.getItemsByDateRange(fromDate, toDate);
         return ResponseEntity.ok(items);
     }
 
@@ -75,15 +76,15 @@ public class ItemController {
 
     // cập nhật item
     @PutMapping("/{id}")
-    public ResponseEntity<ItemResponseDTO> updateItem(@PathVariable Long id, @RequestBody ItemRequestDTO requestDTO) {
-        ItemResponseDTO updatedItem = itemService.updateItem(id, requestDTO);
+    public ResponseEntity<ItemWithAlertResponseDTO> updateItem(@PathVariable Long id, @RequestBody ItemWithAlertRequestDTO requestDTO) {
+        ItemWithAlertResponseDTO updatedItem = itemService.updateItem(id, requestDTO);
         return ResponseEntity.ok(updatedItem);
     }
 
     // cập nhật id category của item
     @PatchMapping("/{id}/category")
-    public ResponseEntity<ItemResponseDTO> updateItemCategory(@PathVariable Long id, @RequestBody UpdateCategoryRequestDTO requestDTO) {
-        ItemResponseDTO updatedItem = itemService.updateItemCategory(id, requestDTO.getCategoryId());
+    public ResponseEntity<ItemWithAlertResponseDTO> updateItemCategory(@PathVariable Long id, @RequestBody UpdateCategoryRequestDTO requestDTO) {
+        ItemWithAlertResponseDTO updatedItem = itemService.updateItemCategory(id, requestDTO.getCategoryId());
         return ResponseEntity.ok(updatedItem);
     }
 
