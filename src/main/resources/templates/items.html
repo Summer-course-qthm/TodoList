@@ -56,6 +56,22 @@
         <a th:href="@{/items/new}" class="btn btn-primary btn-primary-custom">
             <i class="fa fa-plus me-1"></i> Thêm công việc
         </a>
+
+        <form th:action="@{/items/filterByDate}" method="post" class="d-flex gap-2">
+            <input type="date"
+                   id="filterDate"
+                   name="date"
+                   class="form-control"
+                   style="width: 180px;"
+                   placeholder="Chọn ngày"
+
+                   th:value="${selectedDate}"> <button type="submit" class="btn btn-outline-primary">
+            <i class="fa fa-search me-1"></i> Tìm kiếm
+        </button>
+            <a th:href="@{/items/showview}" class="btn btn-outline-secondary">
+                <i class="fa fa-times me-1"></i> Đặt lại
+            </a>
+        </form>
     </div>
 
     <div class="card shadow-sm">

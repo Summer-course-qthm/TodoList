@@ -64,6 +64,19 @@ public class ItemController {
         List<ItemWithAlertResponseDTO> items = itemService.getItemsByDateRange(fromDate, toDate);
         return ResponseEntity.ok(items);
     }
+    //
+    @GetMapping("/containing-date")
+    public ResponseEntity<List<ItemWithAlertResponseDTO>> getItemsContainingDate(
+            @RequestParam("date") String dateStr) {
+
+        // Chuyển đổi chuỗi ngày YYYY-MM-DD từ request sang đối tượng LocalDate
+        LocalDate selectedDate = LocalDate.parse(dateStr);
+
+        // Gọi service để lấy danh sách Item thỏa mãn
+        List<ItemWithAlertResponseDTO> items = itemService.getItemsContainingDate(selectedDate);
+
+        return ResponseEntity.ok(items);
+    }
 
 
 

@@ -52,13 +52,34 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="start" class="form-label">Ngày bắt đầu</label>
-                    <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                <div class="col-md-3 mb-3">
+                    <label for="startDate" class="form-label">Ngày bắt đầu</label>
+                    <input type="date"
+                           th:field="*{startDate}"
+                           class="form-control"
+                           id="startDate" required>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="due" class="form-label">Ngày kết thúc</label>
-                    <input type="datetime-local" th:field="*{due}" class="form-control" required>
+                <div class="col-md-3 mb-3">
+                    <label for="startTime" class="form-label">Giờ bắt đầu</label>
+                    <input type="time"
+                           th:field="*{startTime}"
+                           class="form-control"
+                           id="startTime" required>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label for="dueDate" class="form-label">Ngày kết thúc</label>
+                    <input type="date"
+                           th:field="*{dueDate}"
+                           class="form-control"
+                           id="dueDate" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="dueTime" class="form-label">Giờ kết thúc</label>
+                    <input type="time"
+                           th:field="*{dueTime}"
+                           class="form-control"
+                           id="dueTime" required>
                 </div>
             </div>
 
