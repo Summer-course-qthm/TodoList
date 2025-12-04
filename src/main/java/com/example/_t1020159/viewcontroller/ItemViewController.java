@@ -105,15 +105,30 @@ public class ItemViewController {
     // 4. LỌC DANH SÁCH THEO NGÀY (Logic: selectedDate nằm trong [start, due])
     @PostMapping("/filterByDate")
     public String filterItemsByDate(
-            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             Model model) {
 
-        // Gọi phương thức lọc mới
+        // Nếu không chọn ngày → quay lại danh sách
+        if (date == null) {
+            return "redirect:/items/showview";
+        }
+
+        // Lọc theo ngày
         List<ItemWithAlertResponseDTO> items = itemService.getItemsContainingDate(date);
 
         model.addAttribute("items", items);
+        model.addAttribute("selectedDate", date.toString());
 
-        model.addAttribute("selectedDate", date.toString()); // chuyển locadatet thành chuỗi string
         return "items";
+    }
+
+    //5 đảo trạng thái
+    @PostMapping("/toggle-status/{id}")
+    public String toggleStatus(@PathVariable Long id) {
+        itemService.toggleItemStatus(id);
+
+        // Load lại trang danh sách hiện tại
+        return "redirect:/items/showview";
     }
 }

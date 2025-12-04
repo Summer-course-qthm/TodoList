@@ -262,4 +262,14 @@ public class ItemService {
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
+    //9. Đảo ngược trạng thái Status (Hoàn thành <-> Đang làm)
+    public void toggleItemStatus(Long id) {
+        ItemEntity item = itemRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Item not found"));
+
+        // Đảo ngược trạng thái hiện tại
+        item.setStatus(!item.isStatus());
+
+        itemRepository.save(item);
+    }
 }
