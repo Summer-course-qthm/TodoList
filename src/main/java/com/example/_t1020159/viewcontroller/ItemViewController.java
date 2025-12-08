@@ -1,7 +1,6 @@
 package com.example._t1020159.viewcontroller;
 
 import com.example._t1020159.dto.request.ItemFormRequestDTO;
-import com.example._t1020159.dto.response.CategoriesResponseDTO;
 import com.example._t1020159.dto.response.ItemWithAlertResponseDTO;
 import com.example._t1020159.service.CategoriesService;
 import com.example._t1020159.service.ItemService;
@@ -24,7 +23,54 @@ public class ItemViewController {
     @Autowired
     private CategoriesService categoriesService;
 
-    // 1. Hiển thị Form tạo mới
+    // --- HÀM QUAN TRỌNG NHẤT: HIỂN THỊ + TÌM KIẾM + SẮP XẾP ---
+    // (Chỉ giữ duy nhất hàm này xử lý /showview)
+    @GetMapping("/showview")
+    public String showAllItems(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false, defaultValue = "start") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDir,
+            @RequestParam(required = false, defaultValue = "false") boolean viewAll, // <--- Thêm tham số này
+            Model model) {
+
+        List<ItemWithAlertResponseDTO> items;
+
+        // LOGIC MỚI:
+        // 1. Nếu người dùng muốn xem tất cả (viewAll=true) -> Lấy hết.
+        if (viewAll) {
+            items = itemService.getAllItems(sortDir, sortBy);
+            model.addAttribute("selectedDate", null); // Xóa ngày trên giao diện
+        }
+        // 2. Ngược lại (mặc định):
+        else {
+            // Nếu không chọn ngày cụ thể -> TỰ ĐỘNG LẤY HÔM NAY
+            if (date == null) {
+                date = LocalDate.now();
+            }
+            // Lấy danh sách theo ngày
+            items = itemService.getItemsContainingDate(date);
+            model.addAttribute("selectedDate", date.toString());
+        }
+
+        model.addAttribute("items", items);
+
+        // Truyền tham số để View biết đang sort theo gì
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("ASC") ? "DESC" : "ASC");
+        model.addAttribute("viewAll", viewAll); // Truyền trạng thái viewAll ra view
+
+        return "items";
+    }
+
+    // Form lọc cũ -> Chuyển hướng sang Showview để dùng GET
+    @PostMapping("/filterByDate")
+    public String filterItemsByDate(@RequestParam("date") String dateStr) {
+        return "redirect:/items/showview?date=" + dateStr;
+    }
+
+    // --- CÁC HÀM CRUD CƠ BẢN ---
+
     @GetMapping("/new")
     public String showNewItemForm(Model model) {
         model.addAttribute("item", new ItemFormRequestDTO());
@@ -32,13 +78,15 @@ public class ItemViewController {
         return "item-form";
     }
 
-    // 2. Hiển thị Form chỉnh sửa
+    @PostMapping("/create")
+    public String createItem(@ModelAttribute("item") ItemFormRequestDTO formDto) {
+        itemService.createItemFromForm(formDto);
+        return "redirect:/items/showview";
+    }
+
     @GetMapping("/edit/{id}")
     public String showEditItemForm(@PathVariable Long id, Model model) {
-        // Lấy Item hiện tại
         ItemWithAlertResponseDTO itemDto = itemService.getItemById(id);
-
-        // Map sang DTO Form (Lưu ý: BỎ qua dueDate, chỉ lấy dueTime)
         ItemFormRequestDTO formDto = ItemFormRequestDTO.builder()
                 .id(itemDto.getId())
                 .title(itemDto.getTitle())
@@ -50,69 +98,27 @@ public class ItemViewController {
                 .recurrenceInterval(itemDto.getRecurrenceInterval())
                 .alertBefore(itemDto.getAlertBefore())
                 .message(itemDto.getMessage())
-                // --- LOGIC MAPPING NGÀY GIỜ MỚI ---
                 .startDate(itemDto.getStart() != null ? itemDto.getStart().toLocalDate() : null)
                 .startTime(itemDto.getStart() != null ? itemDto.getStart().toLocalTime() : null)
-                // .dueDate(...) -> ĐÃ XÓA VÌ KHÔNG DÙNG NỮA
                 .dueTime(itemDto.getDue() != null ? itemDto.getDue().toLocalTime() : null)
                 .build();
-
         model.addAttribute("item", formDto);
         model.addAttribute("categories", categoriesService.getAllCategories());
-
-        // Dùng chung view item-form để đỡ phải tạo nhiều file
         return "item-form";
     }
 
-    // 3. Xử lý Cập nhật
     @PostMapping("/edit/{id}")
     public String updateItem(@PathVariable Long id, @ModelAttribute("item") ItemFormRequestDTO formDto) {
         itemService.updateItemFromForm(id, formDto);
         return "redirect:/items/showview";
     }
 
-    // 4. Xử lý Tạo mới
-    @PostMapping("/create")
-    public String createItem(@ModelAttribute("item") ItemFormRequestDTO formDto) {
-        itemService.createItemFromForm(formDto);
-        return "redirect:/items/showview";
-    }
-
-    // 5. Xử lý Xóa
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/delete/{id}", method = {RequestMethod.DELETE, RequestMethod.POST})
     public String deleteItem(@PathVariable Long id) {
         itemService.deleteItem(id);
         return "redirect:/items/showview";
     }
 
-    // 6. Xem danh sách
-    @GetMapping("/showview")
-    public String showAllItems(Model model) {
-        // Gọi hàm getAllItems (đã tích hợp logic tự động cập nhật ngày trễ)
-        List<ItemWithAlertResponseDTO> items = itemService.getAllItems(null, null);
-        model.addAttribute("items", items);
-        return "items";
-    }
-
-    // 7. Lọc theo ngày
-    @PostMapping("/filterByDate")
-    public String filterItemsByDate(
-            @RequestParam(value = "date", required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            Model model) {
-
-        if (date == null) {
-            return "redirect:/items/showview";
-        }
-
-        List<ItemWithAlertResponseDTO> items = itemService.getItemsContainingDate(date);
-        model.addAttribute("items", items);
-        model.addAttribute("selectedDate", date.toString());
-
-        return "items";
-    }
-
-    // 8. Đảo trạng thái (Hoàn thành <-> Chưa)
     @PostMapping("/toggle-status/{id}")
     public String toggleStatus(@PathVariable Long id) {
         itemService.toggleItemStatus(id);

@@ -33,7 +33,7 @@ public class ItemService {
     @Autowired
     private ModelMapper modelMapper;
 
-    // --- 1. TẠO ITEM (SỬA LOGIC TITLE) ---
+    // --- 1. TẠO ITEM (GIỮ NGUYÊN LOGIC CỦA BẠN) ---
     public String createItemFromForm(ItemFormRequestDTO formDto) {
         CategoriesEntity category = categoriesRepository.findById(formDto.getCategoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
@@ -41,14 +41,12 @@ public class ItemService {
         String finalTitle = formDto.getTitle();
         String interval = formDto.getRecurrenceInterval();
 
-        // LOGIC MỚI: Tự động thêm (1/X) vào tiêu đề nếu chọn WEEK/MONTH/YEAR
         if (formDto.isRecurring() && interval != null) {
             int target = 0;
             if ("WEEK".equalsIgnoreCase(interval)) target = 7;
             else if ("MONTH".equalsIgnoreCase(interval)) target = 30;
             else if ("YEAR".equalsIgnoreCase(interval)) target = 365;
 
-            // Nếu có mục tiêu cụ thể, thêm đuôi đếm vào tiêu đề
             if (target > 0) {
                 finalTitle = finalTitle + " (1/" + target + ")";
             }
@@ -56,7 +54,7 @@ public class ItemService {
 
         ItemEntity newItem = ItemEntity.builder()
                 .prioritize(formDto.getPrioritize())
-                .title(finalTitle) // Lưu tiêu đề đã sửa
+                .title(finalTitle)
                 .description(formDto.getDescription())
                 .start(formDto.getStartDateTime())
                 .due(formDto.getDueDateTime())
@@ -72,44 +70,56 @@ public class ItemService {
         return "tao item thanh cong";
     }
 
-    // (Giữ nguyên các hàm Get, Delete, Update cũ...)
+    // --- 2. LẤY DANH SÁCH & SẮP XẾP (ĐÃ SỬA) ---
     @Transactional
-    public void deleteItem(Long id) {
-        itemRepository.deleteById(id);
-    }
-    // ... (Các hàm getAllItems, getItemById giữ nguyên như file trước) ...
-    @Transactional
-    public List<ItemWithAlertResponseDTO> getAllItems(String sortPrioritize, String sortBy) {
+    public List<ItemWithAlertResponseDTO> getAllItems(String sortDir, String sortBy) {
+        // Tự động cập nhật trễ hạn
         autoUpdateOverdueTasks();
-        Sort.Direction direction;
-        String sortInput = (sortPrioritize != null && !sortPrioritize.isEmpty()) ? sortPrioritize.toUpperCase() : "ASC";
-        try {
-            direction = Sort.Direction.fromString(sortInput);
-        } catch (IllegalArgumentException e) {
+
+        // Xử lý hướng sắp xếp (ASC/DESC)
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && sortDir.equalsIgnoreCase("DESC")) {
             direction = Sort.Direction.DESC;
         }
-        String sortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "due";
-        Sort sortCriteria = Sort.by(direction, sortField);
+
+        // Xử lý trường sắp xếp (Mặc định là 'due' - ngày kết thúc)
+        String actualSortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "due";
+
+        Sort sortCriteria = Sort.by(direction, actualSortField);
+
         return itemRepository.findAll(sortCriteria).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    // --- 3. TÌM KIẾM THEO NGÀY (ĐÃ SỬA GỌI REPO MỚI) ---
+    public List<ItemWithAlertResponseDTO> getItemsContainingDate(LocalDate date) {
+        if (date == null) return List.of();
+
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
+        // Gọi query tùy chỉnh trong Repository
+        List<ItemEntity> items = itemRepository.findTasksContainingDate(startOfDay, endOfDay);
+
+        return items.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // --- 4. CÁC LOGIC KHÁC (GIỮ NGUYÊN) ---
+    @Transactional
+    public void deleteItem(Long id) {
+        itemRepository.deleteById(id);
     }
 
     public ItemWithAlertResponseDTO getItemById(Long id) {
         ItemEntity item = itemRepository.findById(id).orElseThrow();
         return mapToResponseDTO(item);
     }
-    public ItemWithAlertResponseDTO updateItem(Long itemId, ItemWithAlertRequestDTO dto) { return null; } // Giữ code cũ
-    public ItemWithAlertResponseDTO updateItemCategory(Long itemId, Long catId) { return null; } // Giữ code cũ
-    public List<ItemWithAlertResponseDTO> getItemsContainingDate(LocalDate date) { return itemRepository.findAll().stream().map(this::mapToResponseDTO).collect(Collectors.toList()); } // Demo rút gọn
-    public List<ItemWithAlertResponseDTO> getItemsByDate(LocalDate date) { return null; } // Demo
-    public List<ItemWithAlertResponseDTO> getItemsByDateRange(LocalDate f, LocalDate t) { return null; } // Demo
-
-    // Hàm updateItemFromForm giữ nguyên logic map, chỉ lưu ý không can thiệp title ở đây
 
     public ItemWithAlertResponseDTO updateItemFromForm(Long itemId, ItemFormRequestDTO formDto) {
         ItemEntity item = itemRepository.findById(itemId).orElseThrow();
-        // Khi update, ta giữ nguyên title người dùng nhập (hoặc nếu muốn reset đếm thì phải xử lý thêm)
         item.setTitle(formDto.getTitle());
         item.setDescription(formDto.getDescription());
         item.setStart(formDto.getStartDateTime());
@@ -118,11 +128,15 @@ public class ItemService {
         item.setRecurring(formDto.isRecurring());
         item.setRecurrenceInterval(formDto.getRecurrenceInterval());
         item.setCategory(categoriesRepository.findById(formDto.getCategoryId()).orElseThrow());
+
+        // Cập nhật thêm các trường quan trọng
+        item.setPrioritize(formDto.getPrioritize());
+        item.setAlertBefore(formDto.getAlertBefore());
+        item.setMessage(formDto.getMessage());
+
         return mapToResponseDTO(itemRepository.save(item));
     }
 
-
-    // --- 3. LOGIC HOÀN THÀNH & TỰ ĐỘNG TẠO MỚI DỰA TRÊN TITLE ---
     @Transactional
     public void toggleItemStatus(Long id) {
         ItemEntity item = itemRepository.findById(id)
@@ -134,46 +148,34 @@ public class ItemService {
         if (newStatus && item.isRecurring()) {
             handleRecurringCreation(item);
         }
-
         itemRepository.save(item);
     }
 
     private void handleRecurringCreation(ItemEntity currentItem) {
         String title = currentItem.getTitle();
         String interval = currentItem.getRecurrenceInterval();
-
-        // Regex để tìm mẫu "(so_hien_tai/tong_so)" ở cuối tiêu đề
-        // Ví dụ: "Chạy bộ (1/30)" -> Group 1: "Chạy bộ", Group 2: "1", Group 3: "30"
         Pattern pattern = Pattern.compile("^(.*) \\((\\d+)/(\\d+)\\)$");
         Matcher matcher = pattern.matcher(title);
 
         if (matcher.find()) {
-            // TRƯỜNG HỢP 1: CÓ ĐẾM SỐ (WEEK, MONTH, YEAR)
             String baseTitle = matcher.group(1);
             int currentCount = Integer.parseInt(matcher.group(2));
             int targetCount = Integer.parseInt(matcher.group(3));
-
-            // Nếu chưa đủ số lượng, tạo cái tiếp theo
             if (currentCount < targetCount) {
                 int nextCount = currentCount + 1;
                 String newTitle = baseTitle + " (" + nextCount + "/" + targetCount + ")";
                 createNextDayItem(currentItem, newTitle);
             }
-            // Nếu currentCount == targetCount thì dừng, không tạo nữa.
-
         } else {
-            // TRƯỜNG HỢP 2: KHÔNG CÓ ĐẾM SỐ (DAILY hoặc title bị sửa)
-            // Vẫn tạo tiếp vô hạn (cho trường hợp DAILY)
             if ("DAILY".equalsIgnoreCase(interval)) {
                 createNextDayItem(currentItem, currentItem.getTitle());
             }
         }
     }
 
-    // Tạo task cho ngày hôm sau
     private void createNextDayItem(ItemEntity currentItem, String newTitle) {
         ItemEntity newItem = ItemEntity.builder()
-                .title(newTitle) // Tiêu đề mới (đã tăng số)
+                .title(newTitle)
                 .description(currentItem.getDescription())
                 .prioritize(currentItem.getPrioritize())
                 .category(currentItem.getCategory())
@@ -182,15 +184,12 @@ public class ItemService {
                 .status(false)
                 .alertBefore(currentItem.getAlertBefore())
                 .message(currentItem.getMessage())
-                // Luôn cộng 1 ngày
                 .start(currentItem.getStart() != null ? currentItem.getStart().plusDays(1) : null)
                 .due(currentItem.getDue() != null ? currentItem.getDue().plusDays(1) : null)
                 .build();
-
         itemRepository.save(newItem);
     }
 
-    // Tự động cập nhật trễ hạn
     private void autoUpdateOverdueTasks() {
         LocalDateTime now = LocalDateTime.now();
         List<ItemEntity> overdueItems = itemRepository.findAll().stream()
@@ -205,7 +204,6 @@ public class ItemService {
         }
     }
 
-    // Hàm map cũ của bạn (Giữ nguyên)
     private ItemWithAlertResponseDTO mapToResponseDTO(ItemEntity entity) {
         Long categoryId = (entity.getCategory() != null) ? entity.getCategory().getId() : null;
         return ItemWithAlertResponseDTO.builder()
@@ -224,6 +222,11 @@ public class ItemService {
                 .Recurring(entity.isRecurring())
                 .build();
     }
-    // (Bổ sung hàm createItem cũ để tránh lỗi biên dịch controller cũ)
+
+    // Các hàm placeholder
     public String createItem(ItemWithAlertRequestDTO dto) { return "ok"; }
+    public ItemWithAlertResponseDTO updateItem(Long itemId, ItemWithAlertRequestDTO dto) { return null; }
+    public ItemWithAlertResponseDTO updateItemCategory(Long itemId, Long catId) { return null; }
+    public List<ItemWithAlertResponseDTO> getItemsByDate(LocalDate date) { return null; }
+    public List<ItemWithAlertResponseDTO> getItemsByDateRange(LocalDate f, LocalDate t) { return null; }
 }
