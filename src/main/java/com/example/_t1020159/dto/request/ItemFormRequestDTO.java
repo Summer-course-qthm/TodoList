@@ -13,48 +13,48 @@ import java.time.LocalDateTime;
 @Builder
 public class ItemFormRequestDTO {
 
-    // Các trường cơ bản (không đổi)
     private Long id;
     private String title;
     private Long prioritize;
     private String description;
     private boolean status;
     private Long categoryId;
-    private boolean recurring;
-    private String recurrenceInterval;
 
-    // Cảnh báo (không đổi)
+    // Logic lặp lại
+    private boolean recurring;
+    private String recurrenceInterval; // "DAILY", "WEEK"
+
+    // Cảnh báo
     private Integer alertBefore;
     private String message;
 
-    // TRƯỜNG NGÀY/GIỜ MỚI ĐỂ NHẬN DỮ LIỆU TÁCH RỜI TỪ FORM
+    // --- CÁC TRƯỜNG THỜI GIAN ĐÃ SỬA ĐỔI ---
 
-    // Ngày Bắt đầu
+    // 1. Ngày thực hiện (Dùng chung cho cả Start và Due)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate startDate;
 
-    // Giờ Bắt đầu
+    // 2. Giờ bắt đầu
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime startTime;
 
-    // Ngày Kết thúc
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate dueDate;
-
-    // Giờ Kết thúc
+    // 3. Giờ kết thúc (Bỏ dueDate, chỉ lấy giờ)
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime dueTime;
 
     /**
-     * Phương thức tiện ích để ghép Ngày và Giờ thành LocalDateTime
+     * Ghép Ngày + Giờ Bắt đầu
      */
     public LocalDateTime getStartDateTime() {
         if (startDate == null || startTime == null) return null;
         return LocalDateTime.of(startDate, startTime);
     }
 
+    /**
+     * Logic mới: Ngày Kết thúc = Ngày Bắt đầu + Giờ Kết thúc
+     */
     public LocalDateTime getDueDateTime() {
-        if (dueDate == null || dueTime == null) return null;
-        return LocalDateTime.of(dueDate, dueTime);
+        if (startDate == null || dueTime == null) return null;
+        return LocalDateTime.of(startDate, dueTime); // Vẫn dùng startDate
     }
 }

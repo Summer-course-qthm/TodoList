@@ -74,8 +74,9 @@
                     <td th:text="${#temporals.format(item.due, 'dd/MM/yyyy HH:mm')}"></td>
 
                     <td>
-                        <span th:if="${item.recurrenceInterval == 'DAILY'}" class="badge bg-info text-dark">Hằng ngày</span>
-                        <span th:if="${item.recurrenceInterval == 'WEEK'}" class="badge bg-info text-dark">Hằng tuần</span>
+                        <span th:if="${item.recurrenceInterval == 'WEEK'}" class="badge bg-info text-dark">Tuần</span>
+                        <span th:if="${item.recurrenceInterval == 'MONTH'}" class="badge bg-info text-dark">Tháng</span>
+                        <span th:if="${item.recurrenceInterval == 'YEAR'}" class="badge bg-info text-dark">Năm</span>
                         <span th:if="${item.recurrenceInterval == null or item.recurrenceInterval == ''}" class="text-muted">--</span>
                     </td>
 

@@ -17,7 +17,9 @@
     <div class="form-container">
         <h1 th:text="${item.id != null} ? 'Sửa Công Việc #' + ${item.id} : 'Thêm Công Việc Mới'">Thêm Công Việc Mới</h1>
 
-        <form th:action="@{/items/create}" method="post" th:object="${item}">
+        <form th:action="${item.id != null} ? @{'/items/edit/' + ${item.id}} : @{/items/create}"
+              method="post" th:object="${item}">
+
             <input type="hidden" th:field="*{id}" id="itemId"/>
 
             <div class="mb-3">
@@ -31,16 +33,16 @@
             </div>
 
             <div class="row">
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="startDate" class="form-label">Ngày bắt đầu</label>
                     <input type="date" th:field="*{startDate}" class="form-control" id="startDate" required>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="startTime" class="form-label">Giờ bắt đầu</label>
                     <input type="time" th:field="*{startTime}" class="form-control" id="startTime" required>
                 </div>
 
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="dueTime" class="form-label">Giờ kết thúc</label>
                     <input type="time" th:field="*{dueTime}" class="form-control" id="dueTime" required>
                 </div>
@@ -52,8 +54,9 @@
                     <label for="recurrenceInterval" class="form-label">Tần suất</label>
                     <select th:field="*{recurrenceInterval}" class="form-select" id="recurrenceInterval">
                         <option value="">Không lặp lại</option>
-                        <option value="DAILY">Hằng ngày</option>
-                        <option value="WEEK">Hằng tuần</option>
+                        <option value="WEEK">Tuần (7 ngày)</option>
+                        <option value="MONTH">Tháng (30 ngày)</option>
+                        <option value="YEAR">Năm (365 ngày)</option>
                     </select>
                 </div>
                 <div class="col-md-6 mb-3 d-flex align-items-center">
@@ -81,8 +84,8 @@
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Ưu tiên</label>
                     <select th:field="*{prioritize}" class="form-select">
-                        <option value="2">Trung bình</option>
                         <option value="1">Thấp</option>
+                        <option value="2">Trung bình</option>
                         <option value="3">Cao</option>
                     </select>
                 </div>
