@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,7 +35,141 @@ public class ItemService {
     @Autowired
     private ModelMapper modelMapper;
 
-    // --- 1. TẠO ITEM (GIỮ NGUYÊN LOGIC CỦA BẠN) ---
+    // <<< PHẦN BỔ SUNG: Hàng đợi để lưu trữ các thông báo cần hiển thị trên web
+    public static final Queue<String> PENDING_ALERTS = new ConcurrentLinkedQueue<>();
+    // >>> END PHẦN BỔ SUNG
+
+    // Hàm tiện ích ánh xạ Entity sang Response DTO (giữ nguyên)
+    private ItemWithAlertResponseDTO mapToResponseDTO(ItemEntity entity) {
+        Long categoryId = (entity.getCategory() != null) ? entity.getCategory().getId() : null;
+        return ItemWithAlertResponseDTO.builder()
+                .id(entity.getId())
+                .prioritize(entity.getPrioritize())
+                .title(entity.getTitle())
+                .description(entity.getDescription())
+                .start(entity.getStart())
+                .due(entity.getDue())
+                .status(entity.isStatus())
+                .categoryId(categoryId)
+                .name(entity.getCategory() != null ? entity.getCategory().getName() : null)
+                .alertBefore(entity.getAlertBefore())
+                .message(entity.getMessage())
+                .recurrenceInterval(entity.getRecurrenceInterval())
+                .Recurring(entity.isRecurring())
+                .build();
+    }
+
+    // =========================================================
+    //               API ENDPOINT METHODS (REST)
+    // =========================================================
+
+    /**
+     * 1. TẠO ITEM MỚI (Từ ItemController - sử dụng ItemWithAlertRequestDTO)
+     */
+    @Transactional
+    public String createItem(ItemWithAlertRequestDTO requestDTO) {
+        CategoriesEntity category = categoriesRepository.findById(requestDTO.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + requestDTO.getCategoryId()));
+
+        ItemEntity newItem = modelMapper.map(requestDTO, ItemEntity.class);
+        newItem.setCategory(category);
+        newItem.setSent(false);
+
+        itemRepository.save(newItem);
+        return "Tạo item thành công";
+    }
+
+    /**
+     * 2. CẬP NHẬT ITEM (Từ ItemController - sử dụng ItemWithAlertRequestDTO)
+     */
+    @Transactional
+    public ItemWithAlertResponseDTO updateItem(Long itemId, ItemWithAlertRequestDTO requestDTO) {
+        ItemEntity existingItem = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + itemId));
+
+        CategoriesEntity category = categoriesRepository.findById(requestDTO.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + requestDTO.getCategoryId()));
+
+        // Cập nhật các trường từ DTO
+        existingItem.setTitle(requestDTO.getTitle());
+        existingItem.setDescription(requestDTO.getDescription());
+        existingItem.setStart(requestDTO.getStart());
+        existingItem.setDue(requestDTO.getDue());
+        existingItem.setStatus(requestDTO.isStatus());
+        existingItem.setPrioritize(requestDTO.getPrioritize());
+        existingItem.setRecurring(requestDTO.isRecurring());
+        existingItem.setRecurrenceInterval(requestDTO.getRecurrenceInterval());
+        existingItem.setAlertBefore(requestDTO.getAlertBefore());
+        existingItem.setMessage(requestDTO.getMessage());
+        existingItem.setCategory(category);
+
+        ItemEntity updatedItem = itemRepository.save(existingItem);
+        return mapToResponseDTO(updatedItem);
+    }
+
+    /**
+     * 3. CẬP NHẬT CATEGORY ID CỦA ITEM
+     */
+    @Transactional
+    public ItemWithAlertResponseDTO updateItemCategory(Long itemId, Long catId) {
+        ItemEntity existingItem = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + itemId));
+
+        CategoriesEntity category = categoriesRepository.findById(catId)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + catId));
+
+        existingItem.setCategory(category);
+
+        ItemEntity updatedItem = itemRepository.save(existingItem);
+        return mapToResponseDTO(updatedItem);
+    }
+
+    /**
+     * 4. LẤY THEO NGÀY CỤ THỂ (Chỉ quan tâm ngày Start/Due)
+     */
+    public List<ItemWithAlertResponseDTO> getItemsByDate(LocalDate date) {
+        if (date == null) return List.of();
+
+        List<ItemEntity> items = itemRepository.findAll().stream()
+                .filter(item -> (item.getStart() != null &&
+                        item.getStart().toLocalDate().isEqual(date)) ||
+                        (item.getDue() != null &&
+                                item.getDue().toLocalDate().isEqual(date)))
+                .collect(Collectors.toList());
+
+        return items.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 5. LẤY THEO KHOẢNG NGÀY (Start hoặc Due nằm trong khoảng)
+     */
+    public List<ItemWithAlertResponseDTO> getItemsByDateRange(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate == null || toDate == null) return List.of();
+
+        LocalDateTime startRange = fromDate.atStartOfDay();
+        LocalDateTime endRange = toDate.atTime(23, 59, 59);
+
+        List<ItemEntity> items = itemRepository.findAll().stream()
+                .filter(item -> (item.getStart() != null &&
+                        (item.getStart().isAfter(startRange) || item.getStart().isEqual(startRange)) &&
+                        (item.getStart().isBefore(endRange) || item.getStart().isEqual(endRange))) ||
+                        (item.getDue() != null &&
+                                (item.getDue().isAfter(startRange) || item.getDue().isEqual(startRange)) &&
+                                (item.getDue().isBefore(endRange) || item.getDue().isEqual(endRange))))
+                .collect(Collectors.toList());
+
+        return items.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // =========================================================
+    //               VIEW CONTROLLER METHODS (GIỮ NGUYÊN)
+    // =========================================================
+
+    // --- 1. TẠO ITEM (FORM) ---
     public String createItemFromForm(ItemFormRequestDTO formDto) {
         CategoriesEntity category = categoriesRepository.findById(formDto.getCategoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
@@ -70,19 +206,17 @@ public class ItemService {
         return "tao item thanh cong";
     }
 
-    // --- 2. LẤY DANH SÁCH & SẮP XẾP (ĐÃ SỬA) ---
+    // --- 2. LẤY DANH SÁCH & SẮP XẾP ---
     @Transactional
     public List<ItemWithAlertResponseDTO> getAllItems(String sortDir, String sortBy) {
         // Tự động cập nhật trễ hạn
         autoUpdateOverdueTasks();
 
-        // Xử lý hướng sắp xếp (ASC/DESC)
         Sort.Direction direction = Sort.Direction.ASC;
         if (sortDir != null && sortDir.equalsIgnoreCase("DESC")) {
             direction = Sort.Direction.DESC;
         }
 
-        // Xử lý trường sắp xếp (Mặc định là 'due' - ngày kết thúc)
         String actualSortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "due";
 
         Sort sortCriteria = Sort.by(direction, actualSortField);
@@ -92,7 +226,7 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
-    // --- 3. TÌM KIẾM THEO NGÀY (ĐÃ SỬA GỌI REPO MỚI) ---
+    // --- 3. TÌM KIẾM THEO NGÀY CHỨA (LOGIC TRONG REPOSITORY) ---
     public List<ItemWithAlertResponseDTO> getItemsContainingDate(LocalDate date) {
         if (date == null) return List.of();
 
@@ -107,7 +241,8 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
-    // --- 4. CÁC LOGIC KHÁC (GIỮ NGUYÊN) ---
+    // --- 4. CÁC LOGIC CRUD & LẶP LẠI (GIỮ NGUYÊN) ---
+
     @Transactional
     public void deleteItem(Long id) {
         itemRepository.deleteById(id);
@@ -203,30 +338,4 @@ public class ItemService {
             itemRepository.save(item);
         }
     }
-
-    private ItemWithAlertResponseDTO mapToResponseDTO(ItemEntity entity) {
-        Long categoryId = (entity.getCategory() != null) ? entity.getCategory().getId() : null;
-        return ItemWithAlertResponseDTO.builder()
-                .id(entity.getId())
-                .prioritize(entity.getPrioritize())
-                .title(entity.getTitle())
-                .description(entity.getDescription())
-                .start(entity.getStart())
-                .due(entity.getDue())
-                .status(entity.isStatus())
-                .categoryId(categoryId)
-                .name(entity.getCategory() != null ? entity.getCategory().getName() : null)
-                .alertBefore(entity.getAlertBefore())
-                .message(entity.getMessage())
-                .recurrenceInterval(entity.getRecurrenceInterval())
-                .Recurring(entity.isRecurring())
-                .build();
-    }
-
-    // Các hàm placeholder
-    public String createItem(ItemWithAlertRequestDTO dto) { return "ok"; }
-    public ItemWithAlertResponseDTO updateItem(Long itemId, ItemWithAlertRequestDTO dto) { return null; }
-    public ItemWithAlertResponseDTO updateItemCategory(Long itemId, Long catId) { return null; }
-    public List<ItemWithAlertResponseDTO> getItemsByDate(LocalDate date) { return null; }
-    public List<ItemWithAlertResponseDTO> getItemsByDateRange(LocalDate f, LocalDate t) { return null; }
 }

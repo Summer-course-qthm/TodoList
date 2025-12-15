@@ -19,19 +19,23 @@
         .p-high { background-color: #dc3545; }   /* Đỏ */
         .p-mid { background-color: #ffc107; color: #333; } /* Vàng */
         .p-low { background-color: #198754; }    /* Xanh */
-
-        /* Đã xóa style gạch ngang cho row-completed */
     </style>
 </head>
 
 <body>
 <div class="container">
-    <h1 class="text-center">Danh sách công việc</h1>
 
+    <div th:if="${alerts != null and !alerts.isEmpty()}" class="mt-4">
+        <div th:each="alert : ${alerts}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa fa-bell me-2"></i>
+            <span th:text="${alert}">Nội dung cảnh báo sẽ hiển thị ở đây.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    <h1 class="text-center">Danh sách công việc</h1>
     <div class="card mb-4">
         <div class="card-body py-3">
             <div class="row g-3 align-items-center justify-content-between">
-
                 <div class="col-md-auto">
                     <a th:href="@{/items/new}" class="btn btn-primary fw-bold shadow-sm">
                         <i class="fa fa-plus me-1"></i> Thêm mới
@@ -73,7 +77,7 @@
 
                         <a th:href="@{/items/showview}"
                            class="btn btn-sm"
-                           th:classappend="${selectedDate != null && !viewAll} ? 'btn-success' : 'btn-outline-success'"
+                           th:classappend="${selectedDate != null and !viewAll} ? 'btn-success' : 'btn-outline-success'"
                            title="Xem công việc hôm nay">
                             <i class="fa fa-calendar-day"></i> Hôm nay
                         </a>
@@ -121,10 +125,11 @@
                     <td th:text="${#temporals.format(item.due, 'dd/MM HH:mm')}"></td>
 
                     <td>
+                        <span th:if="${item.recurrenceInterval == 'DAILY'}" class="badge bg-info text-dark">Ngày</span>
                         <span th:if="${item.recurrenceInterval == 'WEEK'}" class="badge bg-info text-dark">Tuần</span>
                         <span th:if="${item.recurrenceInterval == 'MONTH'}" class="badge bg-info text-dark">Tháng</span>
                         <span th:if="${item.recurrenceInterval == 'YEAR'}" class="badge bg-info text-dark">Năm</span>
-                        <span th:unless="${item.Recurring}" class="text-muted small"></span>
+                        <span th:unless="${item.Recurring}" class="badge bg-info text-dark">Không</span>
                     </td>
 
                     <td>

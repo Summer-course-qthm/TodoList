@@ -24,41 +24,55 @@ public class ItemViewController {
     private CategoriesService categoriesService;
 
     // --- HÀM QUAN TRỌNG NHẤT: HIỂN THỊ + TÌM KIẾM + SẮP XẾP ---
-    // (Chỉ giữ duy nhất hàm này xử lý /showview)
     @GetMapping("/showview")
     public String showAllItems(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false, defaultValue = "start") String sortBy,
             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
-            @RequestParam(required = false, defaultValue = "false") boolean viewAll, // <--- Thêm tham số này
+            @RequestParam(required = false, defaultValue = "false") boolean viewAll,
             Model model) {
 
         List<ItemWithAlertResponseDTO> items;
+        LocalDate finalDate = date;
+
+        // <<< PHẦN BỔ SUNG: XỬ LÝ CẢNH BÁO TỪ SCHEDULER
+        if (!ItemService.PENDING_ALERTS.isEmpty()) {
+            List<String> alerts = new java.util.ArrayList<>();
+            String alert;
+            // Lấy tất cả thông báo đang chờ
+            while ((alert = ItemService.PENDING_ALERTS.poll()) != null) {
+                alerts.add(alert);
+            }
+            model.addAttribute("alerts", alerts);
+        }
+        // >>> END PHẦN BỔ SUNG
 
         // LOGIC MỚI:
         // 1. Nếu người dùng muốn xem tất cả (viewAll=true) -> Lấy hết.
         if (viewAll) {
             items = itemService.getAllItems(sortDir, sortBy);
-            model.addAttribute("selectedDate", null); // Xóa ngày trên giao diện
+            model.addAttribute("selectedDate", null);
         }
         // 2. Ngược lại (mặc định):
         else {
             // Nếu không chọn ngày cụ thể -> TỰ ĐỘNG LẤY HÔM NAY
             if (date == null) {
-                date = LocalDate.now();
+                finalDate = LocalDate.now();
             }
             // Lấy danh sách theo ngày
-            items = itemService.getItemsContainingDate(date);
-            model.addAttribute("selectedDate", date.toString());
+            items = itemService.getItemsContainingDate(finalDate);
+            model.addAttribute("selectedDate", finalDate.toString());
         }
 
         model.addAttribute("items", items);
+
+        // FIX LỖI: Đảm bảo biến viewAll luôn được truyền vào Model
+        model.addAttribute("viewAll", viewAll);
 
         // Truyền tham số để View biết đang sort theo gì
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("reverseSortDir", sortDir.equals("ASC") ? "DESC" : "ASC");
-        model.addAttribute("viewAll", viewAll); // Truyền trạng thái viewAll ra view
 
         return "items";
     }
