@@ -6,6 +6,8 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body { background-color: #f8f9fa; padding: 20px; font-family: "Segoe UI", Roboto, sans-serif; }
@@ -32,6 +34,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     </div>
+
     <h1 class="text-center">Danh sách công việc</h1>
     <div class="card mb-4">
         <div class="card-body py-3">
@@ -75,9 +78,9 @@
                             <i class="fa fa-list"></i> Tất cả
                         </a>
 
-                        <a th:href="@{/items/showview}"
+                        <a th:href="@{/items/showview(date=${T(java.time.LocalDate).now()})}"
                            class="btn btn-sm"
-                           th:classappend="${selectedDate != null and !viewAll} ? 'btn-success' : 'btn-outline-success'"
+                           th:classappend="${selectedDate == T(java.time.LocalDate).now().toString()} ? 'btn-success' : 'btn-outline-success'"
                            title="Xem công việc hôm nay">
                             <i class="fa fa-calendar-day"></i> Hôm nay
                         </a>
@@ -118,7 +121,6 @@
 
                     <td>
                         <span th:text="${item.title}" class="fw-bold"></span>
-                        <i th:if="${item.alertBefore != null}"></i>
                     </td>
 
                     <td th:text="${#temporals.format(item.start, 'dd/MM HH:mm')}"></td>
@@ -179,5 +181,46 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function checkNewAlerts() {
+        // Gọi API Backend
+        fetch('/items/api/pending-alerts')
+            .then(response => {
+                if (!response.ok) throw new Error("Không thể kết nối tới server");
+                return response.json();
+            })
+            .then(alerts => {
+                if (alerts && alerts.length > 0) {
+                    // Nếu có thông báo mới, hiển thị Popup
+                    // Nối các thông báo lại nếu có nhiều cái cùng lúc
+                    let content = alerts.join('<br><hr>');
+
+                    Swal.fire({
+                        title: '🔔 Cảnh báo công việc!',
+                        html: content,
+                        icon: 'warning',
+                        confirmButtonText: 'Đã rõ',
+                        confirmButtonColor: '#0d6efd',
+                        allowOutsideClick: false, // Bắt buộc user phải bấm nút
+                        backdrop: `rgba(0,0,123,0.4)`
+                    }).then((result) => {
+                        // Sau khi bấm "Đã rõ", reload lại trang để cập nhật dữ liệu
+                        if (result.isConfirmed) {
+                            location.reload();
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Lỗi check alert:', error));
+    }
+
+    // Thiết lập kiểm tra mỗi 10 giây (10000ms)
+    setInterval(checkNewAlerts, 10000);
+
+    // Kiểm tra ngay khi vừa vào trang
+    document.addEventListener('DOMContentLoaded', checkNewAlerts);
+</script>
+
 </body>
 </html>

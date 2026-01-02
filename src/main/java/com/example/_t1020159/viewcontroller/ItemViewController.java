@@ -6,11 +6,13 @@ import com.example._t1020159.service.CategoriesService;
 import com.example._t1020159.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity; // Nhớ import dòng này
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -23,64 +25,42 @@ public class ItemViewController {
     @Autowired
     private CategoriesService categoriesService;
 
-    // --- HÀM QUAN TRỌNG NHẤT: HIỂN THỊ + TÌM KIẾM + SẮP XẾP ---
     @GetMapping("/showview")
     public String showAllItems(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false, defaultValue = "start") String sortBy,
-            @RequestParam(required = false, defaultValue = "ASC") String sortDir,
-            @RequestParam(required = false, defaultValue = "false") boolean viewAll,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir,
+            @RequestParam(required = false) boolean viewAll,
             Model model) {
 
         List<ItemWithAlertResponseDTO> items;
-        LocalDate finalDate = date;
 
-        // <<< PHẦN BỔ SUNG: XỬ LÝ CẢNH BÁO TỪ SCHEDULER
+        // Vẫn giữ logic lấy alert tĩnh (nếu cần hiển thị lại khi F5)
         if (!ItemService.PENDING_ALERTS.isEmpty()) {
-            List<String> alerts = new java.util.ArrayList<>();
-            String alert;
-            // Lấy tất cả thông báo đang chờ
-            while ((alert = ItemService.PENDING_ALERTS.poll()) != null) {
-                alerts.add(alert);
-            }
-            model.addAttribute("alerts", alerts);
+            List<String> alerts = new ArrayList<>();
+            // Lưu ý: Chúng ta KHÔNG poll() ở đây nữa để dành cho API gọi,
+            // hoặc nếu muốn hiển thị cả 2 nơi thì cần xử lý khéo hơn.
+            // Nhưng để API hoạt động tốt nhất, logic poll() nên để ở API bên dưới.
+            // Ở đây ta chỉ lấy danh sách item thôi.
         }
-        // >>> END PHẦN BỔ SUNG
 
-        // LOGIC MỚI:
-        // 1. Nếu người dùng muốn xem tất cả (viewAll=true) -> Lấy hết.
-        if (viewAll) {
+        if (date != null) {
+            items = itemService.getItemsContainingDate(date);
+            model.addAttribute("selectedDate", date.toString());
+            model.addAttribute("viewAll", false);
+        } else {
             items = itemService.getAllItems(sortDir, sortBy);
             model.addAttribute("selectedDate", null);
-        }
-        // 2. Ngược lại (mặc định):
-        else {
-            // Nếu không chọn ngày cụ thể -> TỰ ĐỘNG LẤY HÔM NAY
-            if (date == null) {
-                finalDate = LocalDate.now();
-            }
-            // Lấy danh sách theo ngày
-            items = itemService.getItemsContainingDate(finalDate);
-            model.addAttribute("selectedDate", finalDate.toString());
+            model.addAttribute("viewAll", true);
         }
 
         model.addAttribute("items", items);
-
-        // FIX LỖI: Đảm bảo biến viewAll luôn được truyền vào Model
         model.addAttribute("viewAll", viewAll);
-
-        // Truyền tham số để View biết đang sort theo gì
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
-        model.addAttribute("reverseSortDir", sortDir.equals("ASC") ? "DESC" : "ASC");
+        model.addAttribute("reverseSortDir", sortDir != null && sortDir.equals("ASC") ? "DESC" : "ASC");
 
         return "items";
-    }
-
-    // Form lọc cũ -> Chuyển hướng sang Showview để dùng GET
-    @PostMapping("/filterByDate")
-    public String filterItemsByDate(@RequestParam("date") String dateStr) {
-        return "redirect:/items/showview?date=" + dateStr;
     }
 
     // --- CÁC HÀM CRUD CƠ BẢN ---
@@ -137,5 +117,17 @@ public class ItemViewController {
     public String toggleStatus(@PathVariable Long id) {
         itemService.toggleItemStatus(id);
         return "redirect:/items/showview";
+    }
+
+    // --- API QUAN TRỌNG CHO AJAX GỌI ---
+    @GetMapping("/api/pending-alerts")
+    public ResponseEntity<List<String>> getPendingAlerts() {
+        List<String> alerts = new ArrayList<>();
+        String alert;
+        // Lấy thông báo ra khỏi hàng đợi để gửi về client
+        while ((alert = ItemService.PENDING_ALERTS.poll()) != null) {
+            alerts.add(alert);
+        }
+        return ResponseEntity.ok(alerts);
     }
 }
