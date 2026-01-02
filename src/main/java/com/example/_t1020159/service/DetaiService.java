@@ -24,9 +24,6 @@ public class DetaiService {
     @Autowired
     private CategoriesRepository categoriesRepository;
 
-    /**
-     * Tạo mới detai-task (lặp lại DAILY/WEEK)
-     */
     @Transactional
     public List<ItemResponseDTO> createDetaiTask(ItemRequestDTO requestDTO) {
 
@@ -80,9 +77,6 @@ public class DetaiService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Lấy toàn bộ detai-task (các task lặp lại)
-     */
     public List<ItemResponseDTO> getAllDetaiTasks() {
         List<ItemEntity> recurringTasks = itemRepository.findByIsRecurring(true);
         return recurringTasks.stream()
@@ -90,9 +84,6 @@ public class DetaiService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Hàm tiện ích chuyển Entity sang DTO
-     */
     private ItemResponseDTO mapToResponseDTO(ItemEntity entity) {
         Long categoryId = (entity.getCategory() != null) ? entity.getCategory().getId() : null;
 

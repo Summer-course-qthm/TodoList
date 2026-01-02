@@ -67,13 +67,6 @@ public class GoogleDriveService {
                 .setFields("id, webViewLink") // Lấy thêm webViewLink để tạo link công khai
                 .setSupportsAllDrives(true)
                 .execute();
-
-        /*// Sau khi upload, thiết lập quyền đọc công khai (để link hoạt động)
-        driveService.permissions().create(file.getId(), new com.google.api.services.drive.model.Permission()
-                        .setType("anyone")
-                        .setRole("reader"))
-                .execute();*/
-
         return file.getWebViewLink(); // TRẢ VỀ URL CÔNG KHAI
     }
 

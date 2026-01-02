@@ -34,14 +34,8 @@ public class ItemViewController {
             Model model) {
 
         List<ItemWithAlertResponseDTO> items;
-
-        // Vẫn giữ logic lấy alert tĩnh (nếu cần hiển thị lại khi F5)
         if (!ItemService.PENDING_ALERTS.isEmpty()) {
             List<String> alerts = new ArrayList<>();
-            // Lưu ý: Chúng ta KHÔNG poll() ở đây nữa để dành cho API gọi,
-            // hoặc nếu muốn hiển thị cả 2 nơi thì cần xử lý khéo hơn.
-            // Nhưng để API hoạt động tốt nhất, logic poll() nên để ở API bên dưới.
-            // Ở đây ta chỉ lấy danh sách item thôi.
         }
 
         if (date != null) {
@@ -62,8 +56,6 @@ public class ItemViewController {
 
         return "items";
     }
-
-    // --- CÁC HÀM CRUD CƠ BẢN ---
 
     @GetMapping("/new")
     public String showNewItemForm(Model model) {
@@ -119,7 +111,6 @@ public class ItemViewController {
         return "redirect:/items/showview";
     }
 
-    // --- API QUAN TRỌNG CHO AJAX GỌI ---
     @GetMapping("/api/pending-alerts")
     public ResponseEntity<List<String>> getPendingAlerts() {
         List<String> alerts = new ArrayList<>();
