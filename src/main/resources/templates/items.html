@@ -15,12 +15,10 @@
         .card { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .table-primary { background-color: #0d6efd; color: white; }
         thead th { background-color: #0d6efd !important; color: white; font-weight: 600; }
-
-        /* Badge ưu tiên */
         .priority-badge { font-size: 0.85rem; font-weight: 600; padding: 5px 10px; border-radius: 20px; color: white; width: 80px; display: inline-block;}
-        .p-high { background-color: #dc3545; }   /* Đỏ */
-        .p-mid { background-color: #ffc107; color: #333; } /* Vàng */
-        .p-low { background-color: #198754; }    /* Xanh */
+        .p-high { background-color: #dc3545; }
+        .p-mid { background-color: #ffc107; color: #333; }
+        .p-low { background-color: #198754; }
     </style>
 </head>
 
@@ -30,7 +28,7 @@
     <div th:if="${alerts != null and !alerts.isEmpty()}" class="mt-4">
         <div th:each="alert : ${alerts}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fa fa-bell me-2"></i>
-            <span th:text="${alert}">Nội dung cảnh báo sẽ hiển thị ở đây.</span>
+            <span th:text="${alert}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     </div>
@@ -39,52 +37,39 @@
     <div class="card mb-4">
         <div class="card-body py-3">
             <div class="row g-3 align-items-center justify-content-between">
+
                 <div class="col-md-auto">
-                    <a th:href="@{/items/new}" class="btn btn-primary fw-bold shadow-sm">
+                    <a th:href="@{/items/new}" class="btn btn-primary fw-bold shadow-sm" title="Tạo công việc mới">
                         <i class="fa fa-plus me-1"></i> Thêm mới
                     </a>
+
+                    <button type="button" class="btn btn-outline-success fw-bold shadow-sm ms-2" onclick="addNewCategory()" title="Tạo danh mục mới">
+                        <i class="fa fa-folder-plus me-1"></i> Thêm Danh mục
+                    </button>
+
+                    <button type="button" class="btn btn-outline-secondary fw-bold shadow-sm ms-1" onclick="manageCategories()" title="Xem và xóa danh mục">
+                        <i class="fa fa-list-ul me-1"></i> DS danh mục
+                    </button>
                 </div>
 
                 <div class="col-md-auto">
                     <form th:action="@{/items/showview}" method="get" class="d-flex flex-wrap gap-2 align-items-center">
-
                         <div class="input-group input-group-sm" style="width: auto;">
                             <span class="input-group-text bg-white"><i class="fa fa-calendar-alt text-primary"></i></span>
-                            <input type="date" name="date" class="form-control"
-                                   th:value="${selectedDate}"
-                                   title="Chọn ngày để lọc">
+                            <input type="date" name="date" class="form-control" th:value="${selectedDate}">
                         </div>
-
                         <select name="sortBy" class="form-select form-select-sm" style="width: 130px;">
                             <option value="prioritize" th:selected="${sortBy == 'prioritize'}">Độ ưu tiên</option>
                             <option value="title" th:selected="${sortBy == 'title'}">Tiêu đề</option>
                         </select>
-
                         <select name="sortDir" class="form-select form-select-sm" style="width: 110px;">
                             <option value="ASC" th:selected="${sortDir == 'ASC'}">Tăng dần</option>
                             <option value="DESC" th:selected="${sortDir == 'DESC'}">Giảm dần</option>
                         </select>
-
-                        <button type="submit" class="btn btn-sm btn-outline-primary fw-bold" title="Lọc theo ngày và sắp xếp">
-                            <i class="fa fa-filter"></i> Lọc
-                        </button>
-
+                        <button type="submit" class="btn btn-sm btn-outline-primary fw-bold"><i class="fa fa-filter"></i> Lọc</button>
                         <div class="vr mx-1"></div>
-
-                        <a th:href="@{/items/showview(viewAll=true)}"
-                           class="btn btn-sm"
-                           th:classappend="${viewAll} ? 'btn-secondary' : 'btn-outline-secondary'"
-                           title="Xem tất cả công việc">
-                            <i class="fa fa-list"></i> Tất cả
-                        </a>
-
-                        <a th:href="@{/items/showview(date=${T(java.time.LocalDate).now()})}"
-                           class="btn btn-sm"
-                           th:classappend="${selectedDate == T(java.time.LocalDate).now().toString()} ? 'btn-success' : 'btn-outline-success'"
-                           title="Xem công việc hôm nay">
-                            <i class="fa fa-calendar-day"></i> Hôm nay
-                        </a>
-
+                        <a th:href="@{/items/showview(viewAll=true)}" class="btn btn-sm" th:classappend="${viewAll} ? 'btn-secondary' : 'btn-outline-secondary'"><i class="fa fa-list"></i> Tất cả</a>
+                        <a th:href="@{/items/showview(date=${T(java.time.LocalDate).now()})}" class="btn btn-sm" th:classappend="${selectedDate == T(java.time.LocalDate).now().toString()} ? 'btn-success' : 'btn-outline-success'"><i class="fa fa-calendar-day"></i> Hôm nay</a>
                     </form>
                 </div>
             </div>
@@ -109,23 +94,16 @@
                 </thead>
                 <tbody>
                 <tr th:each="item, iterStat : ${items}">
-
                     <td th:text="${iterStat.count}"></td>
-
                     <td>
                         <span th:if="${item.prioritize == 3}" class="priority-badge p-high">Cao</span>
                         <span th:if="${item.prioritize == 2}" class="priority-badge p-mid">TBình</span>
                         <span th:if="${item.prioritize == 1}" class="priority-badge p-low">Thấp</span>
                         <span th:if="${item.prioritize == null}" class="text-muted small">--</span>
                     </td>
-
-                    <td>
-                        <span th:text="${item.title}" class="fw-bold"></span>
-                    </td>
-
+                    <td><span th:text="${item.title}" class="fw-bold"></span></td>
                     <td th:text="${#temporals.format(item.start, 'dd/MM HH:mm')}"></td>
                     <td th:text="${#temporals.format(item.due, 'dd/MM HH:mm')}"></td>
-
                     <td>
                         <span th:if="${item.recurrenceInterval == 'DAILY'}" class="badge bg-info text-dark">Ngày</span>
                         <span th:if="${item.recurrenceInterval == 'WEEK'}" class="badge bg-info text-dark">Tuần</span>
@@ -133,45 +111,29 @@
                         <span th:if="${item.recurrenceInterval == 'YEAR'}" class="badge bg-info text-dark">Năm</span>
                         <span th:unless="${item.Recurring}" class="badge bg-info text-dark">Không</span>
                     </td>
-
                     <td>
                         <form th:action="@{'/items/toggle-status/' + ${item.id}}" method="post">
-                            <button type="submit"
-                                    class="badge border-0 py-2 px-3"
-                                    style="cursor: pointer;"
-                                    th:classappend="${item.status} ? 'bg-success' : 'bg-warning text-dark'"
-                                    title="Nhấn để đổi trạng thái">
+                            <button type="submit" class="badge border-0 py-2 px-3" style="cursor: pointer;" th:classappend="${item.status} ? 'bg-success' : 'bg-warning text-dark'">
                                 <span th:text="${item.status} ? 'Hoàn thành' : 'Đang làm'"></span>
                                 <i class="fa fa-sync-alt ms-1" style="font-size: 0.8em; opacity: 0.7;"></i>
                             </button>
                         </form>
                     </td>
-
                     <td th:text="${item.name != null ? item.name : '--'}"></td>
-
                     <td>
                         <div class="btn-group" role="group">
-                            <a th:href="@{'/items/edit/' + ${item.id}}" class="btn btn-sm btn-outline-primary" title="Sửa">
-                                <i class="fa fa-pen"></i>
-                            </a>
-
+                            <a th:href="@{'/items/edit/' + ${item.id}}" class="btn btn-sm btn-outline-primary"><i class="fa fa-pen"></i></a>
                             <form th:action="@{'/items/delete/' + ${item.id}}" method="post" style="display:inline;">
                                 <input type="hidden" name="_method" value="delete"/>
-                                <button type="submit" class="btn btn-sm btn-outline-danger"
-                                        onclick="return confirm('Bạn có chắc muốn xóa công việc này?');" title="Xóa">
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn xóa công việc này?');"><i class="fa fa-trash"></i></button>
                             </form>
                         </div>
                     </td>
                 </tr>
-
                 <tr th:if="${items.isEmpty()}">
                     <td colspan="9" class="text-center py-5 text-muted">
                         <i class="fa fa-clipboard-list fa-3x mb-3 text-secondary opacity-50"></i><br>
-                        <span th:if="${viewAll}">Chưa có công việc nào trong hệ thống.</span>
-                        <span th:unless="${viewAll}">Hôm nay bạn rảnh rỗi! (Hoặc chưa tạo công việc cho ngày <b th:text="${selectedDate}"></b>)</span>
-                        <br>
+                        <span>Không có dữ liệu hiển thị.</span><br>
                         <a th:href="@{/items/new}" class="btn btn-sm btn-primary mt-2">Tạo công việc ngay</a>
                     </td>
                 </tr>
@@ -183,43 +145,67 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // 1. AUTO ALERT
     function checkNewAlerts() {
-        // Gọi API Backend
         fetch('/items/api/pending-alerts')
-            .then(response => {
-                if (!response.ok) throw new Error("Không thể kết nối tới server");
-                return response.json();
-            })
+            .then(res => { if(!res.ok) throw new Error(); return res.json(); })
             .then(alerts => {
                 if (alerts && alerts.length > 0) {
-                    // Nếu có thông báo mới, hiển thị Popup
-                    // Nối các thông báo lại nếu có nhiều cái cùng lúc
-                    let content = alerts.join('<br><hr>');
-
                     Swal.fire({
-                        title: '🔔 Cảnh báo công việc!',
-                        html: content,
-                        icon: 'warning',
-                        confirmButtonText: 'Đã rõ',
-                        confirmButtonColor: '#0d6efd',
-                        allowOutsideClick: false, // Bắt buộc user phải bấm nút
-                        backdrop: `rgba(0,0,123,0.4)`
-                    }).then((result) => {
-                        // Sau khi bấm "Đã rõ", reload lại trang để cập nhật dữ liệu
-                        if (result.isConfirmed) {
-                            location.reload();
-                        }
-                    });
+                        title: '🔔 Cảnh báo!', html: alerts.join('<br><hr>'), icon: 'warning',
+                        confirmButtonText: 'Đã rõ', backdrop: `rgba(0,0,123,0.4)`, allowOutsideClick: false
+                    }).then((r) => { if(r.isConfirmed) location.reload(); });
                 }
-            })
-            .catch(error => console.error('Lỗi check alert:', error));
+            }).catch(e => console.error(e));
+    }
+    setInterval(checkNewAlerts, 10000);
+    document.addEventListener('DOMContentLoaded', checkNewAlerts);
+
+    // 2. ADD CATEGORY
+    function addNewCategory() {
+        Swal.fire({
+            title: '📂 Thêm Danh mục', input: 'text', inputPlaceholder: 'Nhập tên...', showCancelButton: true, confirmButtonText: 'Lưu', confirmButtonColor: '#198754',
+            inputValidator: (v) => !v && 'Không được để trống!'
+        }).then((r) => {
+            if (r.isConfirmed) {
+                fetch('/categories', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: r.value })
+                }).then(res => res.json()).then(d => {
+                    Swal.fire('Thành công!', '', 'success').then(() => location.reload());
+                });
+            }
+        });
+    }
+    function manageCategories() {
+        fetch('/categories')
+            .then(res => res.json())
+            .then(data => {
+                let html = '<ul class="list-group text-start">';
+                if(data.length === 0) html += '<li class="list-group-item text-muted text-center">Trống</li>';
+                else data.forEach(c => {
+                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                ${c.name} <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})"><i class="fa fa-trash"></i></button>
+                             </li>`;
+                });
+                html += '</ul>';
+                Swal.fire({ title: '📂 Quản lý Danh mục', html: html, showCloseButton: true, showConfirmButton: false });
+            });
     }
 
-    // Thiết lập kiểm tra mỗi 10 giây (10000ms)
-    setInterval(checkNewAlerts, 10000);
-
-    // Kiểm tra ngay khi vừa vào trang
-    document.addEventListener('DOMContentLoaded', checkNewAlerts);
+    // 4. DELETE CATEGORY API
+    function deleteCategory(id) {
+        Swal.fire({
+            title: 'Cảnh báo!', text: "Xóa danh mục sẽ xóa hết các công việc thuộc về nó!", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Xóa hết', cancelButtonText: 'Hủy'
+        }).then((r) => {
+            if (r.isConfirmed) {
+                fetch(`/categories/${id}`, { method: 'DELETE' }).then(res => {
+                    if(res.ok) Swal.fire('Đã xóa!', '', 'success').then(() => manageCategories());
+                    else Swal.fire('Lỗi', 'Không xóa được', 'error');
+                });
+            }
+        });
+    }
 </script>
 
 </body>
